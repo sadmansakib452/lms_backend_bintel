@@ -1,0 +1,50 @@
+name: Deploy NestJS App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull latest code
+        run: |
+          cd /var/www/backend
+          git fetch --all
+          git reset --hard origin/main
+          git pull origin main
+
+      - name: Set DATABASE_URL from GitHub Secrets
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          yarn install
+
+      - name: Generate prisma client
+        run: |
+          cd /var/www/backend
+          npx prisma generate
+
+      - name: Migrate prisma schema
+        run: |
+          cd /var/www/backend
+          npx prisma migrate deploy
+
+      - name: Build application
+        run: |
+          cd /var/www/backend
+          yarn build
+
+      - name: Deploy to VPS
+        run: |
+          cd /var/www/backend
+          pm2 stop backend || true
+          pm2 delete backend || true
+          pm2 start dist/main.js --name "backend"
+          pm2 save

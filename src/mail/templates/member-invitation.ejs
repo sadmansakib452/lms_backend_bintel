@@ -1,0 +1,23 @@
+<p>Hey <%= member.fname %>
+</p>
+<p>You have been invited by <%= user.fname %>
+    <%= user.lname %> (<%= user.email %>) to join <%= process.env.APP_NAME %>.</p>
+
+<%= process.env.APP_NAME %> lets you manage all your customer conversations conveniently from one place while
+  collaborating with your team.
+
+  <p>
+    <a href='<%= url %>'>Accept Invitation</a>
+  </p>
+
+  <p>
+    Regards,
+    <br />
+    <%= process.env.APP_NAME %>
+  </p>
+  <hr />
+  <p>
+    If you're having trouble clicking the "Accept Invitation" button, copy and
+    paste the URL below into your web browser:
+    <%= url %>
+  </p>
