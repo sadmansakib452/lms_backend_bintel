@@ -63,18 +63,18 @@ export class AuthController {
       if (!name) {
         throw new HttpException('Name not provided', HttpStatus.UNAUTHORIZED);
       }
-      if (!first_name) {
-        throw new HttpException(
-          'First name not provided',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-      if (!last_name) {
-        throw new HttpException(
-          'Last name not provided',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
+      // if (!first_name) {
+      //   throw new HttpException(
+      //     'First name not provided',
+      //     HttpStatus.UNAUTHORIZED,
+      //   );
+      // }
+      // if (!last_name) {
+      //   throw new HttpException(
+      //     'Last name not provided',
+      //     HttpStatus.UNAUTHORIZED,
+      //   );
+      // }
       if (!email) {
         throw new HttpException('Email not provided', HttpStatus.UNAUTHORIZED);
       }
@@ -95,10 +95,10 @@ export class AuthController {
       });
 
       return response;
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }
@@ -113,6 +113,8 @@ export class AuthController {
 
       const user_email = req.user.email;
 
+      const user = req.user;
+      console.log('User from request:', user);
       const response = await this.authService.login({
         userId: user_id,
         email: user_email,
@@ -126,10 +128,10 @@ export class AuthController {
       });
 
       res.json(response);
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message || 'Something went wrong',
       };
     }
   }
@@ -151,10 +153,10 @@ export class AuthController {
       );
 
       return response;
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }
@@ -167,10 +169,10 @@ export class AuthController {
       const userId = req.user.userId;
       const response = await this.authService.revokeRefreshToken(userId);
       return response;
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }
@@ -437,10 +439,10 @@ export class AuthController {
     try {
       const user_id = req.user.userId;
       return await this.authService.generate2FASecret(user_id);
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }
@@ -454,10 +456,10 @@ export class AuthController {
       const user_id = req.user.userId;
       const token = data.token;
       return await this.authService.verify2FA(user_id, token);
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }
@@ -470,10 +472,10 @@ export class AuthController {
     try {
       const user_id = req.user.userId;
       return await this.authService.enable2FA(user_id);
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }
@@ -486,10 +488,10 @@ export class AuthController {
     try {
       const user_id = req.user.userId;
       return await this.authService.disable2FA(user_id);
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: error?.message,
       };
     }
   }

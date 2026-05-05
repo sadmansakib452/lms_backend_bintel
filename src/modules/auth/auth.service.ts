@@ -251,7 +251,7 @@ export class AuthService {
         },
         type: user.type,
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         message: error.message,
@@ -429,7 +429,7 @@ export class AuthService {
         success: true,
         message: 'We have sent a verification link to your email',
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         message: error.message,
@@ -547,10 +547,10 @@ export class AuthService {
           });
 
           // delete otp code
-          // await this.ucodeRepository.deleteToken({
-          //   email: email,
-          //   token: token,
-          // });
+          await this.ucodeRepository.deleteToken({
+            email: email,
+            token: token,
+          });
 
           return {
             success: true,
