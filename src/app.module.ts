@@ -21,6 +21,8 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { PrometheusModule } from './prometheus/prometheus.module';
+import { PermissionModule } from './modules/permissions/permissions.module';
+import { RoleModule } from './modules/roles/roles.module';
 import { RepositoryModule } from './common/repository/repository.module';
 
 @Module({
@@ -77,6 +79,8 @@ import { RepositoryModule } from './common/repository/repository.module';
     AdminModule,
     ChatModule,
     PaymentModule,
+    PermissionModule,
+    RoleModule,
     PrometheusModule,
   ],
   controllers: [AppController],

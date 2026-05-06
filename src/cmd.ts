@@ -1,17 +1,28 @@
-// external imports
-import { Module } from '@nestjs/common';
-import { CommandFactory } from 'nest-commander';
-// internal imports
-import { PrismaService } from './prisma/prisma.service';
-import { SeedCommand } from './command/seed.command';
+// // external imports
+// import { Module } from '@nestjs/common';
+// import { CommandFactory } from 'nest-commander';
+// // internal imports
+// import { PrismaService } from './prisma/prisma.service';
+// import { SeedCommand } from './command/seed.command';
 
-@Module({
-  providers: [SeedCommand, PrismaService],
-})
-export class AppModule {}
+// @Module({
+//   providers: [SeedCommand, PrismaService],
+// })
+// export class AppModule {}
+
+// async function bootstrap() {
+//   await CommandFactory.run(AppModule);
+// }
+
+// bootstrap();
+
+import { CommandFactory } from 'nest-commander';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  await CommandFactory.run(AppModule);
+  await CommandFactory.run(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug'],
+  });
 }
 
 bootstrap();

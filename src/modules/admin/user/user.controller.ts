@@ -17,16 +17,18 @@ import { Role } from '../../../common/guard/role/role.enum';
 import { Roles } from '../../../common/guard/role/roles.decorator';
 import { RolesGuard } from '../../../common/guard/role/roles.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RequirePermission } from '../../../common/decorator/require-permission.decorator';
+import { PermissionGuard } from '../../../common/guard/permission.guard';
 
 @ApiBearerAuth()
 @ApiTags('User')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 @Controller('admin/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiResponse({ description: 'Create a user' })
+  @RequirePermission('create', 'users')
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     try {
@@ -41,6 +43,7 @@ export class UserController {
   }
 
   @ApiResponse({ description: 'Get all users' })
+  @RequirePermission('read', 'users')
   @Get()
   async findAll(
     @Query() query: { q?: string; type?: string; approved?: string },
@@ -61,7 +64,7 @@ export class UserController {
   }
 
   // approve user
-  @Roles(Role.ADMIN)
+  @RequirePermission('manage', 'users')
   @ApiResponse({ description: 'Approve a user' })
   @Post(':id/approve')
   async approve(@Param('id') id: string) {
@@ -77,7 +80,7 @@ export class UserController {
   }
 
   // reject user
-  @Roles(Role.ADMIN)
+  @RequirePermission('manage', 'users')
   @ApiResponse({ description: 'Reject a user' })
   @Post(':id/reject')
   async reject(@Param('id') id: string) {
@@ -93,6 +96,7 @@ export class UserController {
   }
 
   @ApiResponse({ description: 'Get a user by id' })
+  @RequirePermission('read', 'users')
   @Get(':id')
   async findOne(@Param('id') id: string) {
     try {
@@ -106,6 +110,7 @@ export class UserController {
     }
   }
 
+  @RequirePermission('update', 'users')
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     try {
@@ -119,6 +124,7 @@ export class UserController {
     }
   }
 
+  @RequirePermission('delete', 'users')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     try {

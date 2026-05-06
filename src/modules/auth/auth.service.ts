@@ -15,6 +15,8 @@ import { SojebStorage } from '../../common/lib/Disk/SojebStorage';
 import { DateHelper } from '../../common/helper/date.helper';
 import { StripePayment } from '../../common/lib/Payment/stripe/StripePayment';
 import { StringHelper } from '../../common/helper/string.helper';
+import { PermissionService } from '../permissions/permissions.service';
+import { RoleService } from '../roles/roles.service';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +26,8 @@ export class AuthService {
     private mailService: MailService,
     private userRepository: UserRepository,
     private ucodeRepository: UcodeRepository,
+    private permissionService: PermissionService,
+    private roleService: RoleService,
     @InjectRedis() private readonly redis: Redis,
   ) {}
 
@@ -60,10 +64,21 @@ export class AuthService {
         );
       }
 
+      // Get user's roles
+      const userRoles = await this.roleService.getUserRoles(userId);
+
+      // Get user's permissions
+      const permissions =
+        await this.permissionService.getUserPermissions(userId);
+
       if (user) {
         return {
           success: true,
-          data: user,
+          data: {
+            ...user,
+            roles: userRoles.roles,
+            permissions: permissions,
+          },
         };
       } else {
         return {
@@ -74,7 +89,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -165,7 +180,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -254,7 +269,7 @@ export class AuthService {
     } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -298,7 +313,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -322,7 +337,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -432,7 +447,7 @@ export class AuthService {
     } catch (error: any) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -469,7 +484,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -518,7 +533,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -571,7 +586,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -607,7 +622,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -646,7 +661,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -680,7 +695,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -735,7 +750,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -747,7 +762,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -768,7 +783,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -791,7 +806,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
@@ -814,7 +829,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        message: error.message,
+        message: (error as Error).message,
       };
     }
   }
