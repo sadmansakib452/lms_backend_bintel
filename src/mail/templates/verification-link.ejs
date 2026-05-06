@@ -1,4 +1,50 @@
-<p>Hello <%= name %>,</p>
-<p>Please click the link below to verify your email:</p>
-<a href="<%= verificationLink %>">Verify Email</a>
-<p>This link will expire in 24 hours.</p>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify Your Email</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f7f5;font-family:Arial,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f7f5;padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+            <tr>
+              <td style="background:#416A53;padding:18px 24px;color:#ffffff;font-size:20px;font-weight:700;">
+                <%= appName || 'EduFlow Pro' %>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;">
+                <p style="margin:0 0 12px 0;font-size:16px;">Hello <%= name %>,</p>
+                <p style="margin:0 0 18px 0;line-height:1.6;">
+                  Welcome to <strong><%= appName || 'EduFlow Pro' %></strong>. Please verify your email to activate your account.
+                </p>
+                <p style="margin:0 0 22px 0;">
+                  <a href="<%= verificationLink %>" style="display:inline-block;background:#416A53;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:600;">
+                    Verify Email
+                  </a>
+                </p>
+                <p style="margin:0 0 18px 0;color:#6b7280;line-height:1.6;">This link will expire in 24 hours.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;background:#f8faf9;border-top:1px solid #e5e7eb;">
+                <p style="margin:0 0 8px 0;color:#4b5563;font-size:12px;line-height:1.6;">
+                  This is an official notification from <strong><%= appName || 'EduFlow Pro' %></strong>, a Learning Management System.
+                </p>
+                <p style="margin:0 0 8px 0;color:#6b7280;font-size:12px;line-height:1.6;">
+                  By using the platform, you agree to our Terms of Service and Privacy Policy. Please keep your account credentials secure.
+                </p>
+                <p style="margin:0;color:#9ca3af;font-size:12px;line-height:1.6;">
+                  If you did not create an account, you can ignore this email.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -477,7 +477,7 @@ export class AuthService {
       // Send verification email with token
       await this.mailService.sendVerificationLink({
         email,
-        name: email,
+        name,
         token: token.token,
         type: 'student',
       });
@@ -511,6 +511,7 @@ export class AuthService {
           email: email,
           name: user.name,
           otp: token,
+        purpose: 'password_reset',
         });
 
         return {
@@ -650,6 +651,7 @@ export class AuthService {
           email: email,
           name: user.name,
           otp: token,
+          purpose: 'verification',
         });
 
         return {
@@ -721,8 +723,9 @@ export class AuthService {
 
         await this.mailService.sendOtpCodeToEmail({
           email: email,
-          name: email,
+          name: user.name,
           otp: token,
+          purpose: 'email_change',
         });
 
         return {
