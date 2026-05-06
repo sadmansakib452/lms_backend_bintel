@@ -44,7 +44,6 @@ export class AuthService {
           avatar: true,
           address: true,
           phone_number: true,
-          type: true,
           gender: true,
           date_of_birth: true,
           created_at: true,
@@ -66,6 +65,11 @@ export class AuthService {
 
       // Get user's roles
       const userRoles = await this.roleService.getUserRoles(userId);
+      const roles = userRoles.roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        title: role.title,
+      }));
 
       // Get user's permissions
       const permissions =
@@ -76,7 +80,7 @@ export class AuthService {
           success: true,
           data: {
             ...user,
-            roles: userRoles.roles,
+            roles: roles,
             permissions: permissions,
           },
         };
@@ -203,6 +207,18 @@ export class AuthService {
         password: _password,
       });
       if (_isValidPassword) {
+        if (!user.email_verified_at) {
+          throw new UnauthorizedException(
+            'Please verify your email before logging in',
+          );
+        }
+
+        if (!user.approved_at) {
+          throw new UnauthorizedException(
+            'Your account is pending approval. Please contact support',
+          );
+        }
+
         const { password, ...result } = user;
         if (user.is_two_factor_enabled) {
           if (token) {
@@ -264,7 +280,6 @@ export class AuthService {
           access_token: accessToken,
           refresh_token: refreshToken,
         },
-        type: user.type,
       };
     } catch (error: any) {
       return {
@@ -348,14 +363,12 @@ export class AuthService {
     last_name,
     email,
     password,
-    type,
   }: {
     name: string;
     first_name: string;
     last_name: string;
     email: string;
     password: string;
-    type?: string;
   }) {
     try {
       // Check if email already exist
@@ -377,7 +390,6 @@ export class AuthService {
         last_name: last_name,
         email: email,
         password: password,
-        type: type,
       });
 
       if (user == null && user.success == false) {
@@ -404,6 +416,36 @@ export class AuthService {
           },
         });
       }
+
+      // Ensure RBAC role mapping for newly registered learners.
+      const studentRole = await this.prisma.role.findFirst({
+        where: {
+          name: 'student',
+          deleted_at: null,
+        },
+        select: { id: true },
+      });
+
+      if (!studentRole) {
+        return {
+          success: false,
+          message: 'Default student role is not configured',
+        };
+      }
+
+      await this.prisma.roleUser.upsert({
+        where: {
+          role_id_user_id: {
+            role_id: studentRole.id,
+            user_id: user.data.id,
+          },
+        },
+        update: {},
+        create: {
+          role_id: studentRole.id,
+          user_id: user.data.id,
+        },
+      });
 
       // ----------------------------------------------------
       // // create otp code
@@ -437,7 +479,7 @@ export class AuthService {
         email,
         name: email,
         token: token.token,
-        type: type,
+        type: 'student',
       });
 
       return {
@@ -558,6 +600,7 @@ export class AuthService {
             },
             data: {
               email_verified_at: new Date(Date.now()),
+              approved_at: new Date(Date.now()),
             },
           });
 

@@ -58,7 +58,6 @@ export class AuthController {
       const last_name = data.last_name;
       const email = data.email;
       const password = data.password;
-      const type = data.type;
 
       if (!name) {
         throw new HttpException('Name not provided', HttpStatus.UNAUTHORIZED);
@@ -91,7 +90,6 @@ export class AuthController {
         last_name: last_name,
         email: email,
         password: password,
-        type: type,
       });
 
       return response;
@@ -114,7 +112,6 @@ export class AuthController {
       const user_email = req.user.email;
 
       const user = req.user;
-      console.log('User from request:', user);
       const response = await this.authService.login({
         userId: user_id,
         email: user_email,

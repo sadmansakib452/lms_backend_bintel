@@ -18,6 +18,16 @@ export class UserService {
     try {
       const user = await this.userRepository.createUser(createUserDto);
 
+      if (user.success && user?.data?.id) {
+        await this.prisma.user.update({
+          where: { id: user.data.id },
+          data: {
+            email_verified_at: DateHelper.now(),
+            approved_at: DateHelper.now(),
+          },
+        });
+      }
+
       if (user.success) {
         return {
           success: user.success,

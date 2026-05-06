@@ -51,12 +51,12 @@ export class PermissionGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    if (!user || !user.id) {
+    const userId = user?.id || user?.userId;
+
+    if (!user || !userId) {
       this.logger.warn('PermissionGuard: No user found in request');
       throw new ForbiddenException('Authentication required');
     }
-
-    const userId = user.id;
 
     try {
       // Check if user has the required permission

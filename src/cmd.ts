@@ -1,26 +1,25 @@
-// // external imports
-// import { Module } from '@nestjs/common';
-// import { CommandFactory } from 'nest-commander';
-// // internal imports
-// import { PrismaService } from './prisma/prisma.service';
-// import { SeedCommand } from './command/seed.command';
-
-// @Module({
-//   providers: [SeedCommand, PrismaService],
-// })
-// export class AppModule {}
-
-// async function bootstrap() {
-//   await CommandFactory.run(AppModule);
-// }
-
-// bootstrap();
-
+import { Module } from '@nestjs/common';
 import { CommandFactory } from 'nest-commander';
-import { AppModule } from './app.module';
+import { ConfigModule } from '@nestjs/config';
+import appConfig from './config/app.config';
+import { RepositoryModule } from './common/repository/repository.module';
+import { SeedCommand } from './command/seed.command';
+
+// Seed-only module: avoid booting full `AppModule` (which initializes gateways).
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig],
+    }),
+    RepositoryModule,
+  ],
+  providers: [SeedCommand],
+})
+export class SeedAppModule {}
 
 async function bootstrap() {
-  await CommandFactory.run(AppModule, {
+  await CommandFactory.run(SeedAppModule, {
     logger: ['log', 'error', 'warn', 'debug'],
   });
 }
