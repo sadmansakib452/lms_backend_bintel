@@ -5,6 +5,7 @@ import {
   CursorPaginatedResponse,
   PaginationMeta,
   PaginationLinks,
+  PrismaOffsetPaginationParams,
 } from './pagination.types';
 
 /**
@@ -55,6 +56,63 @@ import {
  * @class PaginationHelper
  */
 export class PaginationHelper {
+  /**
+   * Build offset-based pagination response directly from Prisma delegate.
+   *
+   * This method centralizes both DB fetching and response shaping so endpoints
+   * only pass delegate + query config.
+   */
+  static async prismaOffsetPaginate<T>(
+    params: PrismaOffsetPaginationParams<T>,
+  ): Promise<OffsetPaginatedResponse<T>> {
+    const {
+      delegate,
+      page,
+      limit,
+      where = {},
+      orderBy,
+      select,
+      include,
+      baseUrl,
+      query = {},
+    } = params;
+
+    this.validateOffsetParams(page, limit, 0, 0);
+
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const findManyArgs: any = {
+      where,
+      skip,
+      take,
+    };
+
+    if (orderBy !== undefined) {
+      findManyArgs.orderBy = orderBy;
+    }
+    if (select !== undefined) {
+      findManyArgs.select = select;
+    }
+    if (include !== undefined) {
+      findManyArgs.include = include;
+    }
+
+    const [items, totalItems] = await Promise.all([
+      delegate.findMany(findManyArgs),
+      delegate.count({ where }),
+    ]);
+
+    return this.offsetPaginate({
+      items,
+      totalItems,
+      currentPage: page,
+      itemsPerPage: limit,
+      baseUrl,
+      query,
+    });
+  }
+
   /**
    * Build offset-based pagination response
    *

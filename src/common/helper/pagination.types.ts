@@ -43,6 +43,48 @@ export interface OffsetPaginationParams<T> {
 }
 
 /**
+ * Prisma delegate shape required by Prisma-aware pagination helper.
+ */
+export interface PrismaPaginationDelegate<T> {
+  findMany(args: any): Promise<T[]>;
+  count(args: any): Promise<number>;
+}
+
+/**
+ * Pagination request parameters for Prisma-aware offset pagination.
+ * Use this to paginate directly from a Prisma delegate without
+ * writing per-endpoint repository/service pagination boilerplate.
+ */
+export interface PrismaOffsetPaginationParams<T> {
+  /** Prisma model delegate (e.g. prisma.permission, prisma.role) */
+  delegate: PrismaPaginationDelegate<T>;
+
+  /** Current page number (1-indexed) */
+  page: number;
+
+  /** Number of items per page */
+  limit: number;
+
+  /** Prisma where clause */
+  where?: Record<string, any>;
+
+  /** Prisma orderBy clause */
+  orderBy?: any;
+
+  /** Prisma select clause */
+  select?: Record<string, any>;
+
+  /** Prisma include clause */
+  include?: Record<string, any>;
+
+  /** Base URL for link generation */
+  baseUrl: string;
+
+  /** Additional query parameters to preserve in links */
+  query?: Record<string, any>;
+}
+
+/**
  * Pagination request parameters for cursor-based pagination
  *
  * @template T - Type of items in the response

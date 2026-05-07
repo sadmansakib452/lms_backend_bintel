@@ -4,9 +4,9 @@ import {
   Post,
   Body,
   Query,
-  HttpStatus,
   BadRequestException,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -14,14 +14,22 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 import { PermissionService } from './permissions.service';
 import {
   CreatePermissionDto,
-  PermissionsResponseDto,
+  PermissionResponseDto,
 } from './dto/permission.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionGuard } from '../../common/guard/permission.guard';
 import { RequirePermission } from '../../common/decorator/require-permission.decorator';
+import appConfig from '../../config/app.config';
+import { PaginationHelper } from '../../common/helper/pagination.helper';
+import {
+  OffsetPaginatedResponse,
+  CursorPaginatedResponse,
+} from '../../common/helper/pagination.types';
+import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Permission Controller
@@ -37,7 +45,10 @@ import { RequirePermission } from '../../common/decorator/require-permission.dec
 @UseGuards(JwtAuthGuard, PermissionGuard)
 @ApiBearerAuth()
 export class PermissionController {
-  constructor(private readonly permissionService: PermissionService) {}
+  constructor(
+    private readonly permissionService: PermissionService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * Get all permissions from system
@@ -78,20 +89,97 @@ export class PermissionController {
     description: 'Filter by action (e.g., create, delete)',
     example: 'create',
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page (default: 10, max: 100)',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description:
+      'Pagination mode: "offset" (default) or "cursor". Use cursor for infinite scroll.',
+    example: 'offset',
+  })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description:
+      'Cursor value (permission id) for cursor pagination. Only used when type=cursor.',
+    example: 'cmotx1hn50002egtuytswjkza',
+  })
   async getAll(
+    @Req() req: Request,
     @Query('subject') subject?: string,
     @Query('action') action?: string,
-  ): Promise<{ success: boolean; data: PermissionsResponseDto }> {
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('type') type: string = 'offset',
+    @Query('cursor') cursor?: string,
+  ): Promise<
+    | OffsetPaginatedResponse<PermissionResponseDto>
+    | CursorPaginatedResponse<PermissionResponseDto>
+  > {
     try {
-      const data = await this.permissionService.getAllPermissions({
-        subject,
-        action,
-      });
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.max(1, Math.min(100, parseInt(limit) || 10));
+      const normalizedType = type === 'cursor' ? 'cursor' : 'offset';
+      const where: any = {};
+      if (subject) where.subject = subject;
+      if (action) where.action = action;
 
-      return {
-        success: true,
-        data,
-      };
+      const configuredBase = appConfig().app.url || '';
+      const resolvedConfiguredBase = configuredBase.includes('${PORT}')
+        ? configuredBase.replace('${PORT}', String(appConfig().app.port))
+        : configuredBase;
+      const baseUrl = resolvedConfiguredBase
+        ? `${resolvedConfiguredBase}/api/admin/permissions`
+        : `${req.protocol}://${req.get('host')}/api/admin/permissions`;
+
+      if (normalizedType === 'cursor') {
+        const rows = await this.prisma.permission.findMany({
+          where,
+          orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+          take: limitNum + 1,
+          ...(cursor
+            ? {
+                cursor: { id: cursor },
+                skip: 1,
+              }
+            : {}),
+        });
+
+        const hasMore = rows.length > limitNum;
+        const items = hasMore ? rows.slice(0, limitNum) : rows;
+        const nextCursor =
+          hasMore && items.length > 0 ? items[items.length - 1].id : undefined;
+
+        return PaginationHelper.cursorPaginate<PermissionResponseDto>({
+          items: items as PermissionResponseDto[],
+          hasMore,
+          nextCursor,
+          limit: limitNum,
+          baseUrl,
+          query: { subject, action, type: 'cursor' },
+        });
+      }
+
+      return await PaginationHelper.prismaOffsetPaginate<PermissionResponseDto>({
+        delegate: this.prisma.permission,
+        where,
+        orderBy: { created_at: 'asc' },
+        page: pageNum,
+        limit: limitNum,
+        baseUrl,
+        query: { subject, action, type: 'offset' },
+      });
     } catch (error) {
       throw new BadRequestException((error as Error).message);
     }
