@@ -98,6 +98,23 @@ export class AuthService {
     }
   }
 
+  async getAllPermissionsForAdmin(filters?: {
+    subject?: string;
+    action?: string;
+  }) {
+    try {
+      const data = await this.permissionService.getAllPermissions(filters);
+
+      return data;
+    } catch (error) {
+      return {
+        permissions: [],
+        total: 0,
+        grouped: {},
+      };
+    }
+  }
+
   async updateUser(
     userId: string,
     updateUserDto: UpdateUserDto,

@@ -12,7 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -24,6 +24,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import appConfig from '../../config/app.config';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../../common/guard/permission.guard';
+import { RequirePermission } from '../../common/decorator/require-permission.decorator';
+import { PermissionsResponseDto } from '../permissions/dto/permission.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -46,6 +49,53 @@ export class AuthController {
         success: false,
         message: 'Failed to fetch user details',
       };
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Get all system permissions (for admin panel)',
+    description:
+      'Returns all available permissions in the system with optional filtering by subject and action',
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @RequirePermission('manage', 'roles')
+  @ApiQuery({
+    name: 'subject',
+    required: false,
+    description: 'Filter by subject (e.g., courses, users, roles)',
+    example: 'courses',
+  })
+  @ApiQuery({
+    name: 'action',
+    required: false,
+    description: 'Filter by action (e.g., create, read, update, delete, manage)',
+    example: 'create',
+  })
+  @Get('permissions')
+  async getAllPermissions(
+    @Req() req: Request,
+  ): Promise<{ success: boolean; data: PermissionsResponseDto }> {
+    try {
+      const subject =
+        (req.query['subject'] as string | undefined) ?? undefined;
+      const action = (req.query['action'] as string | undefined) ?? undefined;
+
+      const data = await this.authService.getAllPermissionsForAdmin({
+        subject,
+        action,
+      });
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        // keep message generic to avoid leaking internals
+        message: error?.message || 'Failed to fetch permissions',
+      } as any;
     }
   }
 

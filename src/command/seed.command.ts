@@ -299,7 +299,13 @@ export class SeedCommand extends CommandRunner {
 
     const adminGrants = [
       ['manage', 'users'],
+      // Roles & permissions admin panel
+      ['create', 'roles'],
       ['read', 'roles'],
+      ['update', 'roles'],
+      ['delete', 'roles'],
+      ['manage', 'roles'],
+      ['create', 'permissions'],
       ['read', 'permissions'],
       ['manage', 'courses'],
       ['manage', 'lessons'],

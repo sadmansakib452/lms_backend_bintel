@@ -20,6 +20,8 @@ import {
   PermissionsResponseDto,
 } from './dto/permission.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionGuard } from '../../common/guard/permission.guard';
+import { RequirePermission } from '../../common/decorator/require-permission.decorator';
 
 /**
  * Permission Controller
@@ -32,7 +34,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
  */
 @ApiTags('permissions')
 @Controller('admin/permissions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 @ApiBearerAuth()
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
@@ -58,6 +60,7 @@ export class PermissionController {
    * Response: { permissions: [...], total: 5, grouped: { courses: 5 } }
    */
   @Get()
+  @RequirePermission('read', 'permissions')
   @ApiOperation({
     summary: 'Get all permissions',
     description:
@@ -110,6 +113,7 @@ export class PermissionController {
    * Response: { success: true, data: { id: 'perm_123', ... } }
    */
   @Post()
+  @RequirePermission('create', 'permissions')
   @ApiOperation({
     summary: 'Create new permission',
     description: 'Create a new permission in the system (admin only)',

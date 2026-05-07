@@ -72,6 +72,9 @@ export class PermissionService {
     dto: CreatePermissionDto,
   ): Promise<PermissionResponseDto> {
     const permission = await this.permissionRepository.create(dto);
+    // Permission catalog changed; invalidate cached permission sets
+    // so subsequent permission checks rebuild fresh from DB.
+    await this.invalidateAllPermissionCaches();
     return permission as PermissionResponseDto;
   }
 
