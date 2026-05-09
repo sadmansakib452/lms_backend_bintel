@@ -12,7 +12,8 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { BanUserDto, UnbanUserDto } from './dto/ban-user.dto';
+import { ApiBearerAuth, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { Role } from '../../../common/guard/role/role.enum';
 import { Roles } from '../../../common/guard/role/roles.decorator';
 import { RolesGuard } from '../../../common/guard/role/roles.guard';
@@ -46,14 +47,16 @@ export class UserController {
   @RequirePermission('read', 'users')
   @Get()
   async findAll(
-    @Query() query: { q?: string; type?: string; approved?: string },
+    @Query() query: { q?: string; type?: string; approved?: string; page?: string; limit?: string },
   ) {
     try {
       const q = query.q;
       const type = query.type;
       const approved = query.approved;
+      const page = parseInt(query.page || '1');
+      const limit = parseInt(query.limit || '10');
 
-      const users = await this.userService.findAll({ q, type, approved });
+      const users = await this.userService.findAll({ q, type, approved, page, limit });
       return users;
     } catch (error) {
       return {
@@ -63,14 +66,14 @@ export class UserController {
     }
   }
 
-  // approve user
-  @RequirePermission('manage', 'users')
-  @ApiResponse({ description: 'Approve a user' })
-  @Post(':id/approve')
-  async approve(@Param('id') id: string) {
+  // Ban user
+  @RequirePermission('delete', 'users')
+  @ApiResponse({ description: 'Ban a user' })
+  @Post(':id/ban')
+  async ban(@Param('id') id: string, @Body() dto: BanUserDto) {
     try {
-      const user = await this.userService.approve(id);
-      return user;
+      const result = await this.userService.ban(id, dto);
+      return result;
     } catch (error) {
       return {
         success: false,
@@ -79,14 +82,14 @@ export class UserController {
     }
   }
 
-  // reject user
-  @RequirePermission('manage', 'users')
-  @ApiResponse({ description: 'Reject a user' })
-  @Post(':id/reject')
-  async reject(@Param('id') id: string) {
+  // Unban user
+  @RequirePermission('update', 'users')
+  @ApiResponse({ description: 'Unban a user' })
+  @Post(':id/unban')
+  async unban(@Param('id') id: string, @Body() dto: UnbanUserDto) {
     try {
-      const user = await this.userService.reject(id);
-      return user;
+      const result = await this.userService.unban(id, dto);
+      return result;
     } catch (error) {
       return {
         success: false,

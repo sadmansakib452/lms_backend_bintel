@@ -72,6 +72,7 @@ model User {
 
   is_two_factor_enabled Int?    @default(0)
   two_factor_secret     String? // secret key for two factor authentication
+  ban_reason            String? @db.Text // reason for account suspension
 
   accounts                  Account[]
   creator_conversations     Conversation[] @relation("creator")

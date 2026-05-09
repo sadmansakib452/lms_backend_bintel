@@ -1,17 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { BanUserDto, UnbanUserDto } from './dto/ban-user.dto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { UserRepository } from '../../../common/repository/user/user.repository';
 import appConfig from '../../../config/app.config';
 import { SojebStorage } from '../../../common/lib/Disk/SojebStorage';
 import { DateHelper } from '../../../common/helper/date.helper';
+import { PaginationHelper } from '../../../common/helper/pagination.helper';
+import { MailService } from '../../../mail/mail.service';
+import { PermissionService } from '../../permissions/permissions.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
     private userRepository: UserRepository,
+    private mailService: MailService,
+    private permissionService: PermissionService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -51,13 +57,17 @@ export class UserService {
     q,
     type,
     approved,
+    page = 1,
+    limit = 10,
   }: {
     q?: string;
     type?: string;
     approved?: string;
+    page?: number;
+    limit?: number;
   }) {
     try {
-      const where_condition = {};
+      const where_condition: any = {};
       if (q) {
         where_condition['OR'] = [
           { name: { contains: q, mode: 'insensitive' } },
@@ -71,29 +81,22 @@ export class UserService {
 
       if (approved) {
         where_condition['approved_at'] =
-          approved == 'approved' ? { not: null } : { equals: null };
+          approved == 'active' ? { not: null } : { equals: null };
       }
 
-      const users = await this.prisma.user.findMany({
-        where: {
-          ...where_condition,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone_number: true,
-          address: true,
-          type: true,
-          approved_at: true,
-          created_at: true,
-          updated_at: true,
-        },
+      const result = await PaginationHelper.prismaOffsetPaginate({
+        delegate: this.prisma.user,
+        where: where_condition,
+        orderBy: { created_at: 'desc' },
+        page,
+        limit,
+        baseUrl: '/api/admin/user',
+        query: { q, type, approved },
       });
 
       return {
         success: true,
-        data: users,
+        ...result,
       };
     } catch (error) {
       return {
@@ -235,6 +238,73 @@ export class UserService {
         success: false,
         message: error.message,
       };
+    }
+  }
+
+  async ban(id: string, dto: BanUserDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, name: true, type: true },
+      });
+
+      if (!user) {
+        return { success: false, message: 'User not found' };
+      }
+
+      // Prevent banning super admin
+      if (user.type === 'su_admin') {
+        return { success: false, message: 'Cannot ban super admin' };
+      }
+
+      await this.userRepository.banUser(id, dto.reason);
+
+      // Invalidate user permission cache
+      await this.permissionService.invalidateUserPermissionCache(id);
+
+      // Send email notification if enabled
+      if (dto.send_email !== false && user.email && user.name) {
+        await this.mailService.sendBanNotification({
+          email: user.email,
+          name: user.name,
+          reason: dto.reason,
+        });
+      }
+
+      return { success: true, message: 'User banned successfully' };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  }
+
+  async unban(id: string, dto: UnbanUserDto) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, name: true },
+      });
+
+      if (!user) {
+        return { success: false, message: 'User not found' };
+      }
+
+      await this.userRepository.unbanUser(id);
+
+      // Invalidate user permission cache
+      await this.permissionService.invalidateUserPermissionCache(id);
+
+      // Send email notification if enabled
+      if (dto.send_email !== false && user.email && user.name) {
+        await this.mailService.sendUnbanNotification({
+          email: user.email,
+          name: user.name,
+          reason: dto.reason,
+        });
+      }
+
+      return { success: true, message: 'User unbanned successfully' };
+    } catch (error) {
+      return { success: false, message: error.message };
     }
   }
 }

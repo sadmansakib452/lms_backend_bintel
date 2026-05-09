@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
@@ -24,9 +24,16 @@ export class CreateUserDto {
   password: string;
 
   @IsOptional()
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'The type of the user',
     example: 'user',
   })
   type?: string;
+
+  @IsOptional()
+  @ApiPropertyOptional({
+    description: 'Role ID to assign to user',
+    example: 'role_123',
+  })
+  role_id?: string;
 }

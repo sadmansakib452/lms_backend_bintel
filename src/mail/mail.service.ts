@@ -103,4 +103,44 @@ export class MailService {
       console.log(error);
     }
   }
+
+  async sendBanNotification(params: { email: string; name: string; reason: string }) {
+    try {
+      const from = `${process.env.APP_NAME} <${appConfig().mail.from}>`;
+      await this.queue.add('sendBanNotification', {
+        to: params.email,
+        from: from,
+        subject: 'Your Account Has Been Suspended - EduFlow Pro',
+        template: 'account-suspended',
+        context: {
+          name: params.name,
+          reason: params.reason,
+          appName: process.env.APP_NAME || 'EduFlow Pro',
+          supportEmail: appConfig().mail.from,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async sendUnbanNotification(params: { email: string; name: string; reason?: string }) {
+    try {
+      const from = `${process.env.APP_NAME} <${appConfig().mail.from}>`;
+      await this.queue.add('sendUnbanNotification', {
+        to: params.email,
+        from: from,
+        subject: 'Your Account Has Been Restored - EduFlow Pro',
+        template: 'account-restored',
+        context: {
+          name: params.name,
+          reason: params.reason || 'Your account has been reinstated',
+          appName: process.env.APP_NAME || 'EduFlow Pro',
+          loginUrl: appConfig().app.client_app_url,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }

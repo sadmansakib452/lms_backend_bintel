@@ -593,4 +593,26 @@ export class UserRepository {
     });
     return user;
   }
+
+  // Ban user - set approved_at to null (blocks login)
+  async banUser(user_id: string, reason: string) {
+    return this.prisma.user.update({
+      where: { id: user_id },
+      data: {
+        approved_at: null,
+        ban_reason: reason,
+      },
+    });
+  }
+
+  // Unban user - set approved_at to now (allows login)
+  async unbanUser(user_id: string) {
+    return this.prisma.user.update({
+      where: { id: user_id },
+      data: {
+        approved_at: new Date(),
+        ban_reason: null,
+      },
+    });
+  }
 }
