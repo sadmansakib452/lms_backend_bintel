@@ -93,6 +93,34 @@ export class PermissionResponseDto {
 }
 
 /**
+ * DTO for updating permission
+ * Used in PUT /admin/permissions/:id endpoint
+ *
+ * @class UpdatePermissionDto
+ */
+export class UpdatePermissionDto {
+  @ApiPropertyOptional({
+    description: 'Human-readable title for the permission',
+    example: 'Courses Create New',
+    type: 'string',
+  })
+  @IsString({ message: 'Title must be a string' })
+  @IsOptional()
+  @MaxLength(100, { message: 'Title must not exceed 100 characters' })
+  title?: string;
+
+  @ApiPropertyOptional({
+    description: 'Description of what this permission allows',
+    example: 'Can create new courses and manage content',
+    type: 'string',
+  })
+  @IsString({ message: 'Description must be a string' })
+  @IsOptional()
+  @MaxLength(255, { message: 'Description must not exceed 255 characters' })
+  description?: string;
+}
+
+/**
  * DTO for listing permissions with grouping
  * Used in GET /auth/permissions response
  *

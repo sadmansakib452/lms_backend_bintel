@@ -6,6 +6,7 @@ import {
   CreatePermissionDto,
   PermissionsResponseDto,
   PermissionResponseDto,
+  UpdatePermissionDto,
 } from './dto/permission.dto';
 
 /**
@@ -76,6 +77,50 @@ export class PermissionService {
     // so subsequent permission checks rebuild fresh from DB.
     await this.invalidateAllPermissionCaches();
     return permission as PermissionResponseDto;
+  }
+
+  /**
+   * Update permission details
+   * @param permissionId - Permission ID
+   * @param dto - Update data
+   * @returns Promise<PermissionResponseDto>
+   *
+   * @example
+   * const updated = await permissionService.updatePermission('perm_123', {
+   *   title: 'New Title',
+   *   description: 'Updated description'
+   * });
+   */
+  async updatePermission(
+    permissionId: string,
+    dto: UpdatePermissionDto,
+  ): Promise<PermissionResponseDto> {
+    const updated = await this.permissionRepository.update(permissionId, {
+      title: dto.title,
+      description: dto.description,
+    });
+
+    // Invalidate all permission caches after update
+    await this.invalidateAllPermissionCaches();
+
+    return updated as PermissionResponseDto;
+  }
+
+  /**
+   * Delete permission (soft delete)
+   * @param permissionId - Permission ID
+   * @returns Promise<{ success: boolean }>
+   *
+   * @example
+   * await permissionService.deletePermission('perm_123');
+   */
+  async deletePermission(permissionId: string): Promise<{ success: boolean }> {
+    await this.permissionRepository.delete(permissionId);
+
+    // Invalidate all permission caches after delete
+    await this.invalidateAllPermissionCaches();
+
+    return { success: true };
   }
 
   /**

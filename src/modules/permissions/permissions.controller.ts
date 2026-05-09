@@ -2,9 +2,13 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
+  Param,
   Query,
   BadRequestException,
+  NotFoundException,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -13,12 +17,14 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiQuery,
+  ApiParam,
 } from '@nestjs/swagger';
 import { Request } from 'express';
 import { PermissionService } from './permissions.service';
 import {
   CreatePermissionDto,
   PermissionResponseDto,
+  UpdatePermissionDto,
 } from './dto/permission.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionGuard } from '../../common/guard/permission.guard';
@@ -228,6 +234,145 @@ export class PermissionController {
         data,
       };
     } catch (error) {
+      throw new BadRequestException((error as Error).message);
+    }
+  }
+
+  /**
+   * Get single permission by ID
+   * Returns detailed information about a specific permission
+   *
+   * @param id - Permission ID
+   * @returns Permission details
+   *
+   * @example
+   * GET /admin/permissions/perm_123
+   * Response: { success: true, data: { id: 'perm_123', ... } }
+   */
+  @Get(':id')
+  @RequirePermission('read', 'permissions')
+  @ApiOperation({
+    summary: 'Get single permission',
+    description: 'Retrieve detailed information about a specific permission',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Permission ID',
+    example: 'cmotx1hno0003egtu9qgx9blk',
+  })
+  async getById(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; data: PermissionResponseDto }> {
+    try {
+      const permission = await this.permissionService.getPermissionById(id);
+
+      if (!permission) {
+        throw new NotFoundException(`Permission with ID ${id} not found`);
+      }
+
+      return {
+        success: true,
+        data: permission,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException((error as Error).message);
+    }
+  }
+
+  /**
+   * Update permission details
+   * Updates title and description of an existing permission
+   *
+   * @param id - Permission ID
+   * @param dto - Update data
+   * @returns Updated permission
+   *
+   * @example
+   * PUT /admin/permissions/perm_123
+   * Body: { title: 'New Title', description: 'Updated description' }
+   * Response: { success: true, data: { id: 'perm_123', ... } }
+   */
+  @Put(':id')
+  @RequirePermission('update', 'permissions')
+  @ApiOperation({
+    summary: 'Update permission',
+    description: 'Update title and description of an existing permission',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Permission ID',
+    example: 'cmotx1hno0003egtu9qgx9blk',
+  })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePermissionDto,
+  ): Promise<{ success: boolean; data: PermissionResponseDto }> {
+    try {
+      // Check if permission exists
+      const existing = await this.permissionService.getPermissionById(id);
+      if (!existing) {
+        throw new NotFoundException(`Permission with ID ${id} not found`);
+      }
+
+      const data = await this.permissionService.updatePermission(id, dto);
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException((error as Error).message);
+    }
+  }
+
+  /**
+   * Delete permission (soft delete)
+   * Marks permission as deleted by setting deleted_at timestamp
+   *
+   * @param id - Permission ID
+   * @returns Success message
+   *
+   * @example
+   * DELETE /admin/permissions/perm_123
+   * Response: { success: true, message: 'Permission perm_123 deleted successfully' }
+   */
+  @Delete(':id')
+  @RequirePermission('delete', 'permissions')
+  @ApiOperation({
+    summary: 'Delete permission',
+    description: 'Soft delete a permission (marks as deleted)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Permission ID',
+    example: 'cmotx1hno0003egtu9qgx9blk',
+  })
+  async delete(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Check if permission exists
+      const existing = await this.permissionService.getPermissionById(id);
+      if (!existing) {
+        throw new NotFoundException(`Permission with ID ${id} not found`);
+      }
+
+      await this.permissionService.deletePermission(id);
+
+      return {
+        success: true,
+        message: `Permission ${id} deleted successfully`,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException((error as Error).message);
     }
   }

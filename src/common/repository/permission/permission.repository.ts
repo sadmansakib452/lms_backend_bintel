@@ -181,4 +181,44 @@ export class PermissionRepository {
     const permission = await this.getByActionSubject(action, subject);
     return !!permission;
   }
+
+  /**
+   * Update permission (soft update)
+   * @param permissionId - Permission ID
+   * @param data - Update data
+   * @returns Promise<Permission>
+   *
+   * @example
+   * const updated = await permissionRepository.update('perm_123', { title: 'New Title' });
+   */
+  async update(
+    permissionId: string,
+    data: { title?: string; description?: string },
+  ) {
+    return this.prisma.permission.update({
+      where: { id: permissionId },
+      data: {
+        title: data.title,
+        conditions: data.description,
+      },
+    });
+  }
+
+  /**
+   * Delete permission (soft delete)
+   * Sets deleted_at timestamp
+   * @param permissionId - Permission ID
+   * @returns Promise<Permission>
+   *
+   * @example
+   * await permissionRepository.delete('perm_123');
+   */
+  async delete(permissionId: string) {
+    return this.prisma.permission.update({
+      where: { id: permissionId },
+      data: {
+        deleted_at: new Date(),
+      },
+    });
+  }
 }
