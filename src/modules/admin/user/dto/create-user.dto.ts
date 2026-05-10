@@ -25,14 +25,7 @@ export class CreateUserDto {
 
   @IsOptional()
   @ApiPropertyOptional({
-    description: 'The type of the user',
-    example: 'user',
-  })
-  type?: string;
-
-  @IsOptional()
-  @ApiPropertyOptional({
-    description: 'Role ID to assign to user',
+    description: 'Role ID to assign to user (use RBAC system instead of type)',
     example: 'role_123',
   })
   role_id?: string;

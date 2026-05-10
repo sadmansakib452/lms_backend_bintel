@@ -47,16 +47,16 @@ export class UserController {
   @RequirePermission('read', 'users')
   @Get()
   async findAll(
-    @Query() query: { q?: string; type?: string; approved?: string; page?: string; limit?: string },
+    @Query() query: { q?: string; approved?: string; page?: string; limit?: string; fields?: string },
   ) {
     try {
       const q = query.q;
-      const type = query.type;
       const approved = query.approved;
       const page = parseInt(query.page || '1');
       const limit = parseInt(query.limit || '10');
+      const fields = query.fields;
 
-      const users = await this.userService.findAll({ q, type, approved, page, limit });
+      const users = await this.userService.findAll({ q, approved, page, limit, fields });
       return users;
     } catch (error) {
       return {
@@ -101,9 +101,9 @@ export class UserController {
   @ApiResponse({ description: 'Get a user by id' })
   @RequirePermission('read', 'users')
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string, @Query('fields') fields?: string) {
     try {
-      const user = await this.userService.findOne(id);
+      const user = await this.userService.findOne(id, fields);
       return user;
     } catch (error) {
       return {
@@ -115,7 +115,10 @@ export class UserController {
 
   @RequirePermission('update', 'users')
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     try {
       const user = await this.userService.update(id, updateUserDto);
       return user;

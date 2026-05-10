@@ -165,16 +165,16 @@ export class UserRepository {
    * @returns
    */
   async syncRole({ user_id, role_id }: { user_id: string; role_id: string }) {
-    const role = await this.prisma.roleUser.updateMany({
-      where: {
-        AND: [
-          {
-            user_id: user_id,
-          },
-        ],
-      },
+    // Delete all existing role assignments for user
+    await this.prisma.roleUser.deleteMany({
+      where: { user_id },
+    });
+
+    // Create new role assignment
+    const role = await this.prisma.roleUser.create({
       data: {
-        role_id: role_id,
+        user_id,
+        role_id,
       },
     });
     return role;
@@ -310,10 +310,12 @@ export class UserRepository {
         data['name'] = name;
       }
       if (email) {
-        // Check if email already exist
-        const userEmailExist = await this.exist({
-          field: 'email',
-          value: String(email),
+        // Check if email already exist (exclude current user)
+        const userEmailExist = await this.prisma.user.findFirst({
+          where: {
+            email: String(email),
+            NOT: { id: user_id }, // Exclude current user
+          },
         });
 
         if (userEmailExist) {
@@ -364,8 +366,8 @@ export class UserRepository {
 
       if (user) {
         if (role_id) {
-          // attach role
-          await this.attachRole({
+          // sync role (update existing instead of creating new)
+          await this.syncRole({
             user_id: user.id,
             role_id: role_id,
           });
