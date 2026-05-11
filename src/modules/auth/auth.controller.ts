@@ -153,19 +153,24 @@ export class AuthController {
 
   // login user
   @ApiOperation({ summary: 'Login user' })
-  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Req() req: Request, @Res() res: Response) {
+  async login(@Body() body: { email: string; password: string; token?: string }, @Res() res: Response) {
     try {
-      const user_id = req.user.id;
+      console.log('[Controller] Login started, email:', body.email, 'token:', body.token ? 'provided' : 'not provided');
+      const { email, password, token } = body;
 
-      const user_email = req.user.email;
+      console.log('[Controller] Calling validateUser...');
+      // Validate user with optional 2FA token
+      const validatedUser = await this.authService.validateUser(email, password, token);
+      console.log('[Controller] validateUser returned, userId:', validatedUser?.id);
 
-      const user = req.user;
+      // If validation passed (including 2FA), generate tokens
+      console.log('[Controller] Calling login service...');
       const response = await this.authService.login({
-        userId: user_id,
-        email: user_email,
+        userId: validatedUser.id,
+        email: validatedUser.email,
       });
+      console.log('[Controller] login service returned');
 
       // store to secure cookies
       res.cookie('refresh_token', response.authorization.refresh_token, {
@@ -174,12 +179,14 @@ export class AuthController {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       });
 
+      console.log('[Controller] Sending response...');
       res.json(response);
     } catch (error: any) {
-      return {
+      console.log('[Controller] Error caught:', error.message);
+      res.json({
         success: false,
         message: error?.message || 'Something went wrong',
-      };
+      });
     }
   }
 

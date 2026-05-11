@@ -43,7 +43,7 @@ export class MailService {
     name: string;
     email: string;
     otp: string;
-    purpose?: 'verification' | 'password_reset' | 'email_change';
+    purpose?: 'verification' | 'password_reset' | 'email_change' | '2fa';
   }) {
     try {
       const from = `${process.env.APP_NAME} <${appConfig().mail.from}>`;
@@ -51,11 +51,13 @@ export class MailService {
         verification: 'Verify Your Email - EduFlow Pro',
         password_reset: 'Reset Your Password - EduFlow Pro',
         email_change: 'Confirm Your New Email - EduFlow Pro',
+        '2fa': 'Your 2FA Code - EduFlow Pro',
       } as const;
       const templateByPurpose = {
         verification: 'otp-email-verification',
         password_reset: 'otp-password-reset',
         email_change: 'otp-email-change',
+        '2fa': 'otp-2fa',
       } as const;
       const selectedPurpose =
         purpose in subjectByPurpose ? purpose : 'verification';
