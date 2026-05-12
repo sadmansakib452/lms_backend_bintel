@@ -211,32 +211,24 @@ export class AuthService {
     pass: string,
     token?: string,
   ): Promise<any> {
-    console.log('[validateUser] Starting with email:', email);
-    const _password = pass;
-    console.log('[validateUser] Finding user...');
     const user = await this.prisma.user.findFirst({
       where: {
         email: email,
       },
     });
-    console.log('[validateUser] User found:', user ? 'yes' : 'no', user?.is_two_factor_enabled ? ', 2FA enabled' : '');
 
     if (user) {
-      console.log('[validateUser] Validating password...');
       const _isValidPassword = await this.userRepository.validatePassword({
         email: email,
-        password: _password,
+        password: pass,
       });
-      console.log('[validateUser] Password valid:', _isValidPassword);
       if (_isValidPassword) {
-        console.log('[validateUser] Checking email verified...');
         if (!user.email_verified_at) {
           throw new UnauthorizedException(
             'Please verify your email before logging in',
           );
         }
 
-        console.log('[validateUser] Checking approval...');
         if (!user.approved_at) {
           throw new UnauthorizedException(
             'Your account is pending approval. Please contact support',
@@ -247,38 +239,30 @@ export class AuthService {
 
         // 2FA Logic
         if (user.is_two_factor_enabled) {
-          console.log('[2FA] User has 2FA enabled, checking token...');
-
           if (token) {
-            console.log('[2FA] Token provided, validating...');
             // Verify token against Ucode
             const validToken = await this.ucodeRepository.validateToken({
               email: user.email,
               token: token,
             });
-            console.log('[2FA] Token valid:', validToken);
             if (validToken) {
               // Valid token - delete and return user
               await this.ucodeRepository.deleteToken({
                 email: user.email,
                 token: token,
               });
-              console.log('[2FA] Token deleted, returning user');
             } else {
               throw new UnauthorizedException('Invalid token');
             }
           } else {
-            console.log('[2FA] No token, creating Ucode token...');
             // No token - create via Ucode (fast, non-blocking)
             const token = await this.ucodeRepository.createToken({
               userId: user.id,
               isOtp: true,
               email: user.email,
             });
-            console.log('[2FA] Ucode created:', token);
 
             // Send token to email (TRULY non-blocking - execute after response)
-            console.log('[2FA] Sending email...');
             setImmediate(() => {
               this.mailService.sendOtpCodeToEmail({
                 name: user.name || 'User',
@@ -287,7 +271,6 @@ export class AuthService {
                 purpose: '2fa',
               }).catch(err => console.error('Failed to send 2FA email:', err));
             });
-            console.log('[2FA] Email queued, throwing exception...');
 
             throw new UnauthorizedException('2FA token required');
           }

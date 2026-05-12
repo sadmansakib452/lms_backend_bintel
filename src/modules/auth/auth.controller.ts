@@ -156,21 +156,16 @@ export class AuthController {
   @Post('login')
   async login(@Body() body: { email: string; password: string; token?: string }, @Res() res: Response) {
     try {
-      console.log('[Controller] Login started, email:', body.email, 'token:', body.token ? 'provided' : 'not provided');
       const { email, password, token } = body;
 
-      console.log('[Controller] Calling validateUser...');
       // Validate user with optional 2FA token
       const validatedUser = await this.authService.validateUser(email, password, token);
-      console.log('[Controller] validateUser returned, userId:', validatedUser?.id);
 
       // If validation passed (including 2FA), generate tokens
-      console.log('[Controller] Calling login service...');
       const response = await this.authService.login({
         userId: validatedUser.id,
         email: validatedUser.email,
       });
-      console.log('[Controller] login service returned');
 
       // store to secure cookies
       res.cookie('refresh_token', response.authorization.refresh_token, {
@@ -179,10 +174,8 @@ export class AuthController {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       });
 
-      console.log('[Controller] Sending response...');
       res.json(response);
     } catch (error: any) {
-      console.log('[Controller] Error caught:', error.message);
       res.json({
         success: false,
         message: error?.message || 'Something went wrong',
